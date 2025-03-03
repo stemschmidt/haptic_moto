@@ -1,0 +1,34 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "showDevDebugOutput": true,
+    "configurations": [
+        {
+            "name": "Debug Haptic",
+            "cwd": "${workspaceFolder}/application",
+            "executable": "build/merged.hex",
+            "interface": "swd",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "external",
+            "gdbTarget": "host.docker.internal:2331",
+            "device": "nrf52840",
+            "overrideLaunchCommands": [
+                "monitor reset 0",
+                "-target-download",
+                "monitor reset 0"
+            ],
+            "overrideResetCommands": [
+                "monitor reset 0"
+            ],
+            "postLaunchCommands": [
+                "file build/application/zephyr/zephyr.elf"
+            ],
+            "rtos": "zephyr",
+            "showDevDebugOutput": "none",
+            "runToEntryPoint": "main"
+        }
+    ]
+}

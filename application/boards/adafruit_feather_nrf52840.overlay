@@ -1,0 +1,22 @@
+/*
+ * Copyright (c) 2025 Stefan Schmidt
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <zephyr/dt-bindings/i2c/i2c.h>
+
+&i2c0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+
+	haptic: drv2605@5a {
+		compatible = "ti,drv2605";
+		reg = <0x5a>;
+		status = "okay";
+
+		actuator-mode = "ERM";
+		loop-gain = "HIGH";
+		feedback-brake-factor = "2X";
+	};
+};
