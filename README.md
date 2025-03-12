@@ -1,4 +1,4 @@
-# Development environment in Docker Container for Nordic nrf-sdk
+# Sample application to evaluate the drv2650 driver in Zephyr OS
 
 Pre-Requisites:
 - git installed
