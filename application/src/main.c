@@ -16,6 +16,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/shell/shell.h>
+#include <zephyr/sys/atomic.h>
 #include <zephyr/sys/util.h>
 
 #define LOG_LEVEL 4
@@ -24,8 +25,7 @@ LOG_MODULE_REGISTER(main);
 
 volatile bool m_terminate = false;
 
-K_MUTEX_DEFINE(m_effect_mutex);
-static uint8_t m_effect = 0U;
+static atomic_t m_effect = ATOMIC_INIT(1);
 
 static struct drv2605_rom_data rom_data = {
     .library = DRV2605_LIBRARY_TS2200_B,  // 3 V motor
@@ -34,13 +34,6 @@ static struct drv2605_rom_data rom_data = {
     .sustain_neg_time = 0,
     .sustain_pos_time = 0,
     .trigger = DRV2605_MODE_INTERNAL_TRIGGER,
-    .seq_regs[0] = 1,
-    .seq_regs[1] = 52 | 0x80,
-    //   .seq_regs[2] = 2,
-    //    .seq_regs[3] = 107 | 0x80,
-    //    .seq_regs[4] = 3,
-    //    .seq_regs[5] = 107 | 0x80,
-    //    .seq_regs[6] = 4,
 };
 
 static void key_press(struct input_event *evt, void *user_data) {
@@ -79,17 +72,14 @@ int main(void) {
   }
 
   while (m_terminate == false) {
-    k_mutex_lock(&m_effect_mutex, K_FOREVER);
-    if (m_effect != 0) {
-      rom_data.seq_regs[1] = m_effect | 0x80;
-      m_effect = 0U;
+      rom_data.seq_regs[0] = atomic_get(&m_effect);
       ret =
           drv2605_haptic_config(dev, DRV2605_HAPTICS_SOURCE_ROM, &config_data);
       if (ret < 0) {
         LOG_ERR("Failed to configure ROM event: %d", ret);
       }
     }
-    k_mutex_unlock(&m_effect_mutex);
+
     LOG_INF("Execute effect %d!", rom_data.seq_regs[1] & ~0x80);
 
     ret = haptics_start_output(dev);
@@ -108,10 +98,8 @@ static int cmd_drv2605_set_effect(const struct shell *sh, size_t argc,
                                   char **argv) {
   uint8_t effect = (uint8_t)atoi(argv[1]);
 
-  if (effect > 0 && effect < 125) {
-    k_mutex_lock(&m_effect_mutex, K_FOREVER);
-    m_effect = effect;
-    k_mutex_unlock(&m_effect_mutex);
+  if (effect >= 1 && effect <= 123) {
+    atomic_set(&m_effect, effect);
   } else {
     shell_print(sh, "Effect %s not supported", argv[1]);
   }
