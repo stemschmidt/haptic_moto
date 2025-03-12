@@ -34,6 +34,8 @@ static struct drv2605_rom_data rom_data = {
     .sustain_neg_time = 0,
     .sustain_pos_time = 0,
     .trigger = DRV2605_MODE_INTERNAL_TRIGGER,
+    .seq_regs[1] = 50 | 0x80,  // add a 500 ms delay
+    .seq_regs[3] = 50 | 0x80   // add a 500 ms delay
 };
 
 static void key_press(struct input_event *evt, void *user_data) {
@@ -72,15 +74,15 @@ int main(void) {
   }
 
   while (m_terminate == false) {
-      rom_data.seq_regs[0] = atomic_get(&m_effect);
-      ret =
-          drv2605_haptic_config(dev, DRV2605_HAPTICS_SOURCE_ROM, &config_data);
-      if (ret < 0) {
-        LOG_ERR("Failed to configure ROM event: %d", ret);
-      }
+    rom_data.seq_regs[0] = atomic_get(&m_effect);
+    rom_data.seq_regs[2] = atomic_get(&m_effect);
+    rom_data.seq_regs[4] = atomic_get(&m_effect);
+    ret = drv2605_haptic_config(dev, DRV2605_HAPTICS_SOURCE_ROM, &config_data);
+    if (ret < 0) {
+      LOG_ERR("Failed to configure ROM event: %d", ret);
     }
 
-    LOG_INF("Execute effect %d!", rom_data.seq_regs[1] & ~0x80);
+    LOG_INF("Execute effect %d!", rom_data.seq_regs[0]);
 
     ret = haptics_start_output(dev);
     if (ret < 0) {
